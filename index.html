@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Management System - RIFASSEGURASPE</title>
+<link rel="icon" type="image/png" href="https://img.icons8.com/fluency/48/ticket.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --primary: #0f172a;
+    --primary-light: #1e293b;
+    --accent: #d97706;
+    --text-main: #334155;
+    --text-dark: #0f172a;
+    --border: #cbd5e1;
+    --danger: #991b1b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background-color: var(--bg-main); color: var(--text-main); padding: 20px 40px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+
+  .header-sistema { text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px double var(--border); width: 100%; max-width: 1240px; }
+  .header-sistema h1 { font-size: 24px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
+  .header-sistema p { font-size: 12px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-top: 4px; }
+
+  .app-layout {
+    display: grid;
+    grid-template-columns: 310px 410px 480px;
+    gap: 20px;
+    max-width: 1240px;
+    width: 100%;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    height: fit-content;
+  }
+
+  h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 4px; }
+
+  .barra-fondo { background: #e2e8f0; border-radius: 2px; height: 14px; width: 100%; overflow: hidden; margin: 10px 0 6px 0; }
+  .barra-progreso { background: var(--accent); height: 100%; width: 0%; color: white; font-weight: bold; display: flex; align-items: center; padding-left: 6px; font-size: 9px; transition: width 0.4s ease; }
+  .metricas-secundarias { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; margin-bottom: 15px; }
+  
+  .mini-card { background: var(--bg-main); border: 1px solid var(--border); border-radius: 4px; padding: 10px; text-align: center; margin-bottom: 10px; }
+  .mini-card h3 { font-size: 18px; color: var(--primary-light); font-weight: 700; }
+  .mini-card p { font-size: 9px; font-weight: 700; color: var(--text-main); text-transform: uppercase; }
+
+  .tabla-contenedor { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
+  th { background: var(--primary-light); color: white; padding: 6px 8px; font-weight: 600; text-transform: uppercase; font-size: 10px; }
+  td { padding: 6px 8px; border-bottom: 1px solid var(--border); color: var(--text-dark); }
+  tr:hover { background: #f1f5f9; }
+  .badge-comprados { background: var(--primary-light); color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold; margin-right: 3px; }
+  .badge-extra { background: var(--accent); color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold; }
+
+  .form-group { margin-bottom: 12px; }
+  label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 3px; color: var(--primary-light); text-transform: uppercase; }
+  input { width: 100%; padding: 6px 10px; font-size: 13px; border: 1px solid var(--border); border-radius: 4px; background: #fafafa; color: var(--text-dark); }
+  input:focus { outline: none; border-color: var(--primary-light); background: #fff; box-shadow: 0 0 0 2px rgba(15,23,42,0.05); }
+  input:disabled { background: #e2e8f0; color: var(--text-main); cursor: not-allowed; }
+
+  .alerta-bloqueo { display: none; background: #fef2f2; border: 1px solid #fca5a5; color: var(--danger); font-size: 11px; font-weight: 700; padding: 8px; border-radius: 4px; margin-bottom: 12px; text-align: center; }
+  .btn-link { background: none; border: none; color: var(--text-main); text-decoration: underline; cursor: pointer; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+  .grupo-referencia { display: none; }
+
+  button[type="submit"] { width: 100%; padding: 8px; background: var(--primary); color: white; border: none; border-radius: 4px; font-size: 12px; font-weight: 700; text-transform: uppercase; cursor: pointer; margin-top: 8px; }
+  button[type="submit"]:hover { background: var(--primary-light); }
+</style>
+</head>
+<body>
+
+<div class="header-sistema">
+  <h1>Data Entry & Control System</h1>
+  <p>Real-Time Transaction Ledger - RIFASSEGURASPE</p>
+</div>
+
+<div class="app-layout">
+  
+  <div class="card">
+    <h2>System Metrics</h2>
+    <div class="barra-fondo">
+      <div class="barra-progreso" id="barra"><span id="txt-porcentaje">0%</span></div>
+    </div>
+    <div class="metricas-secundarias">
+      <span>Sold: <strong id="txt-vendidos">0</strong></span>
+      <span>Total Issued: <strong id="txt-total">0</strong></span>
+    </div>
+    <div class="mini-card">
+      <h3 id="txt-recaudado">S/ 0</h3>
+      <p>Total Financial Revenue</p>
+    </div>
+    <div class="mini-card">
+      <h3 id="txt-participantes">0</h3>
+      <p>Unique Participants</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Data Input</h2>
+    <div class="alerta-bloqueo" id="mensaje">EXISTING RECORD: TICKETS WILL BE ACCUMULATED</div>
+    <form id="form-rifa" autocomplete="off">
+      <div class="form-group">
+        <label for="celular">Phone Number</label>
+        <input type="text" id="celular" maxlength="9" pattern="\d{9}" placeholder="900000000" required autofocus>
+      </div>
+      <div class="form-group">
+        <label for="nombre">Full Name</label>
+        <input type="text" id="nombre" placeholder="Name" required>
+      </div>
+      <div class="form-group">
+        <label for="tickets">Ticket Quantity</label>
+        <input type="number" id="tickets" min="1" placeholder="0" required>
+      </div>
+      <button type="button" class="btn-link" id="btn-agregar-ref">[+ Add Reference Link]</button>
+      <div class="form-group grupo-referencia" id="grupo-ref">
+        <label for="referencia">Referrer Phone</label>
+        <input list="lista-nombres" id="referencia" maxlength="9" pattern="\d{9}" placeholder="Search or type ID">
+        <datalist id="lista-nombres"></datalist>
+      </div>
+      <button type="submit">Process Transaction</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Recent Activity (Top 10)</h2>
+    <div class="tabla-contenedor">
+      <table>
+        <thead>
+          <tr>
+            <th>Phone</th>
+            <th>Name</th>
+            <th>Tkt (Reg / Ext)</th>
+            <th>Referrer</th>
+          </tr>
+        </thead>
+        <tbody id="lista-movimientos">
+          </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const db = window.supabase.createClient('https://ylxukikpakzdcgsomgbn.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlseHVraWtwYWt6ZGNnc29tZ2JuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTgxNTQsImV4cCI6MjA5NDc5NDE1NH0.ldI9cQ1Kz7Yhiz8YCt_xLfBgEdPUGSYt43bAwxtSjr0');
+  
+  const form = document.getElementById('form-rifa');
+  const celular = document.getElementById('celular');
+  const nombre = document.getElementById('nombre');
+  const tickets = document.getElementById('tickets');
+  const referencia = document.getElementById('referencia');
+  const mensaje = document.getElementById('mensaje');
+  const datalist = document.getElementById('lista-nombres');
+  const btnAgregarRef = document.getElementById('btn-agregar-ref');
+  const grupoRef = document.getElementById('grupo-ref');
+  const tablaMovimientos = document.getElementById('lista-movimientos');
+
+  let usuarioExiste = null;
+
+  btnAgregarRef.addEventListener('click', () => {
+    grupoRef.style.display = 'block';
+    btnAgregarRef.style.display = 'none';
+    referencia.focus();
+  });
+
+  async function actualizarDashboard() {
+    const { data } = await db.from('system_metrics').select('*').single();
+    if (!data) return;
+    const meta = 5000;
+    
+    // Mapeo corregido según tu DDL exacto: total_tickets_issued y tickets_sold
+    let porc = ((data.total_tickets_issued / meta) * 100).toFixed(1);
+    if (parseFloat(porc) > 100) porc = 100;
+
+    document.getElementById('txt-vendidos').innerText = data.tickets_sold;
+    document.getElementById('txt-total').innerText = data.total_tickets_issued;
+    document.getElementById('txt-recaudado').innerText = `S/ ${data.tickets_sold}`;
+    document.getElementById('txt-participantes').innerText = data.unique_participants;
+    document.getElementById('barra').style.width = `${porc}%`;
+    document.getElementById('txt-porcentaje').innerText = `${porc}%`;
+  }
+
+  async function cargarNombres() {
+    const { data } = await db.from('participants').select('full_name, phone_number');
+    if (data) {
+      datalist.innerHTML = data.map(u => `<option value="${u.phone_number}">${u.full_name}</option>`).join('');
+    }
+  }
+
+  async function cargarMovimientos() {
+    const { data } = await db.from('recent_activity').select('*');
+    if (data) {
+      tablaMovimientos.innerHTML = data.map(m => `
+        <tr>
+          <td>${m.phone_number}</td>
+          <td><strong>${m.full_name}</strong></td>
+          <td>
+            <span class="badge-comprados" title="Regular">${m.tickets_purchased}</span>
+            <span class="badge-extra" title="Extra">${m.extra_tickets}</span>
+          </td>
+          <td>${m.referrer_phone}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  celular.addEventListener('input', async (e) => {
+    const cel = e.target.value;
+    if (cel.length === 9) {
+      const { data } = await db.from('participants').select('*').eq('phone_number', cel).single();
+      if (data) {
+        usuarioExiste = data;
+        nombre.value = data.full_name;
+        nombre.disabled = true;
+        if (data.referrer_phone) {
+          referencia.value = data.referrer_phone;
+          grupoRef.style.display = 'block';
+          btnAgregarRef.style.display = 'none';
+        }
+        referencia.disabled = true;
+        mensaje.style.display = 'block';
+        tickets.focus();
+      } else {
+        liberarCasillas();
+      }
+    } else {
+      liberarCasillas();
+    }
+  });
+
+  function liberarCasillas() {
+    usuarioExiste = null;
+    nombre.disabled = false;
+    referencia.disabled = false;
+    mensaje.style.display = 'none';
+    grupoRef.style.display = 'none';
+    btnAgregarRef.style.display = 'block';
+    referencia.value = '';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cel_val = celular.value;
+    const nom_val = nombre.value;
+    const tick_val = parseInt(tickets.value);
+    const ref_val = referencia.value || null;
+
+    if (usuarioExiste) {
+      // Modificado para actualizar tickets_purchased acumulando el valor anterior
+      await db.from('participants').update({ tickets_purchased: usuarioExiste.tickets_purchased + tick_val }).eq('phone_number', cel_val);
+    } else {
+      await db.from('participants').insert([{ phone_number: cel_val, full_name: nom_val, tickets_purchased: tick_val, referrer_phone: ref_val }]);
+    }
+    
+    form.reset();
+    liberarCasillas();
+    await cargarNombres();
+    await actualizarDashboard();
+    await cargarMovimientos();
+    celular.focus();
+  });
+
+  // Escucha reactiva en tiempo real vinculada a la tabla participants
+  db.channel('cambios-reales')
+    .on('postgres_changes', { event: '*', filter: 'table=eq.participants' }, () => {
+      actualizarDashboard();
+      cargarMovimientos();
+      cargarNombres();
+    })
+    .subscribe();
+
+  // Ejecución inicial de renderizado
+  actualizarDashboard();
+  cargarNombres();
+  cargarMovimientos();
+</script>
+</body>
+</html>
