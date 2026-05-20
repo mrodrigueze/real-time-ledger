@@ -3,7 +3,7 @@
 A web application for high-speed transaction data entry, real-time metrics compute, and live database synchronization.
 
 ## 🚀 Live Demo
-[View Live Application]([https://YOUR_GITHUB_USERNAME.github.io/real-time-ledger/public/index.html](https://mrodrigueze.github.io/real-time-ledger/))
+[View Live Application](https://mrodrigueze.github.io/real-time-ledger/)
 
 ## 🛠️ System Architecture
 * **Frontend:** Vanilla JavaScript (ES6+), HTML5, CSS3.
