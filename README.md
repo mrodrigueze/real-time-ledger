@@ -40,7 +40,7 @@ Color-coded and numbered tracking allows you to manage dozens of samples in diff
 
 ### 🌐 Live Version (Recommended)
 Access the application instantly without downloading anything:  
-**[Launch Lab Timer Pro](https://mrodrigueze.github.io/lab-timer/)**
+**[Launch Lab Timer Pro](https://mrodrigueze.github.io/real-time-ledger/)**
 
 ### 💻 Local Use
 1. Download the `index.html` file from this repository.
